@@ -2,8 +2,10 @@ import sys
 sys.path.append('..')
 from sklearn.impute import KNNImputer
 from utils import *
+from matplotlib import pyplot as plt
+# from sklearn.neighbors import KNeighborsClassifier
 
-def knn_impute_by_user(matrix, valid_data, k):
+def knn_impute_by_user(matrix, valid_data, k, print_option=True):
     """ Fill in the missing values using k-Nearest Neighbors based on
     student similarity. Return the accuracy on valid_data.
 
@@ -20,7 +22,8 @@ def knn_impute_by_user(matrix, valid_data, k):
     # We use NaN-Euclidean distance measure.
     mat = nbrs.fit_transform(matrix)
     acc = sparse_matrix_evaluate(valid_data, mat)
-    print("Validation Accuracy: {}".format(acc))
+    if print_option:
+        print("Validation Accuracy: {}".format(acc))
     return acc
 
 
@@ -54,14 +57,30 @@ def main():
     print(sparse_matrix)
     print("Shape of sparse matrix:")
     print(sparse_matrix.shape)
-
+    # train_data = load_train_csv('../data')
+    # print(len(train_data['question_id']))
     #####################################################################
     # TODO:                                                             #
     # Compute the validation accuracy for each k. Then pick k* with     #
     # the best performance and report the test accuracy with the        #
     # chosen k*.                                                        #
     #####################################################################
-    pass
+    # Question 1(a)
+    acc_list_user, k_values = [], [1, 6, 11, 16, 21, 26]
+    for k in k_values:
+        acc_list_user.append(knn_impute_by_user(sparse_matrix, val_data, k))
+    fig, ax = plt.subplots(1, 1)
+    ax.plot(k_values, acc_list_user)
+    ax.set_xlabel('K value')
+    ax.set_ylabel('Accuracy on validation data')
+    ax.set_title('PartA 1(a)')
+    plt.savefig('./1(a).png')
+
+    # Question 2(a)
+    best_k_user = k_values[np.argmax(acc_list_user)]
+    test_acc_user = knn_impute_by_user(sparse_matrix, test_data, best_k_user, print_option=False)
+    print('User-based: Chosen k = {}, Test accuracy = {}.'.format(best_k_user, test_acc_user))
+
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
