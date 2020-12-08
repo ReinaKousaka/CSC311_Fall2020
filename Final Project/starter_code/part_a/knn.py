@@ -1,3 +1,5 @@
+import sys
+sys.path.append('..')
 from sklearn.impute import KNNImputer
 from utils import *
 
