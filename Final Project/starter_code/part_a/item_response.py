@@ -1,7 +1,8 @@
 from utils import *
 
 import numpy as np
-
+from scipy.sparse import csc_matrix
+import matplotlib.pyplot as plt
 
 def sigmoid(x):
     """ Apply sigmoid function.
@@ -24,7 +25,12 @@ def neg_log_likelihood(data, theta, beta):
     # TODO:                                                             #
     # Implement the function as described in the docstring.             #
     #####################################################################
-    log_lklihood = 0.
+    usr = np.array(data["user_id"])
+    q = np.array(data["question_id"])
+    c = np.array(data["is_correct"])
+    para = theta[usr] - beta[q]
+    log_like = np.log(sigmoid(para)) * c + np.log(1 - sigmoid(para)) * (1 - c)
+    log_lklihood = np.sum(log_like)
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
@@ -52,7 +58,19 @@ def update_theta_beta(data, lr, theta, beta):
     # TODO:                                                             #
     # Implement the function as described in the docstring.             #
     #####################################################################
-    pass
+    usr = np.array(data["user_id"])
+    q = np.array(data["question_id"])
+    c = np.array(data["is_correct"])
+    para = theta[usr] - beta[q]
+    values = c - sigmoid(para)
+
+    sparse = csc_matrix((values, (usr, q)), shape=(len(theta), len(beta))).toarray()
+    theta = theta + np.sum(sparse, axis=1) * lr
+
+    para = theta[usr] - beta[q]
+    values = c - sigmoid(para)
+    sparse = csc_matrix((values, (usr, q)), shape=(len(theta), len(beta))).toarray()
+    beta = beta - np.sum(sparse, axis=0) * lr
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
@@ -73,20 +91,26 @@ def irt(data, val_data, lr, iterations):
     :return: (theta, beta, val_acc_lst)
     """
     # TODO: Initialize theta and beta.
-    theta = None
-    beta = None
+    theta = np.zeros(542)
+    beta = np.zeros(1774)
 
     val_acc_lst = []
+    train_loglik = []
+    valid_loglik = []
 
     for i in range(iterations):
         neg_lld = neg_log_likelihood(data, theta=theta, beta=beta)
+        val_neg_lld = neg_log_likelihood(val_data, theta=theta, beta=beta)
+        train_loglik.append(-neg_lld)
+        valid_loglik.append(-val_neg_lld)
+
         score = evaluate(data=val_data, theta=theta, beta=beta)
         val_acc_lst.append(score)
         print("NLLK: {} \t Score: {}".format(neg_lld, score))
         theta, beta = update_theta_beta(data, lr, theta, beta)
 
     # TODO: You may change the return values to achieve what you want.
-    return theta, beta, val_acc_lst
+    return theta, beta, val_acc_lst, train_loglik, valid_loglik
 
 
 def evaluate(data, theta, beta):
@@ -120,16 +144,43 @@ def main():
     # Tune learning rate and number of iterations. With the implemented #
     # code, report the validation and test accuracy.                    #
     #####################################################################
-    pass
+    theta, beta, val_acc, train_loglik, valid_loglik \
+        = irt(train_data, val_data, 0.01, 50)
+    # plt.plot(val_acc)
+    # plt.show()
+    plt.plot(train_loglik, label="Training Log-likelihood")
+    plt.plot(valid_loglik, label="Validation Log-likelihood")
+    plt.xlabel("Num of Iteration")
+    plt.legend()
+    plt.show()
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
 
     #####################################################################
     # TODO:                                                             #
-    # Implement part (c)                                                #
+    # Implement part (c)
+    validation_accuracy = evaluate(val_data, theta, beta)
+    test_accuracy = evaluate(test_data, theta, beta)
+    print("Final validation accuracy is: " + str(validation_accuracy))
+    print("Final test accuracy is: " + str(test_accuracy))
     #####################################################################
-    pass
+    # implement part (d)
+    p_1 = sigmoid(theta - beta[0])
+    p_2 = sigmoid(theta - beta[1])
+    p_3 = sigmoid(theta - beta[2])
+    p_4 = sigmoid(theta - beta[3])
+    p_5 = sigmoid(theta - beta[4])
+
+    plt.plot(theta, p_1, label="question 1")
+    plt.plot(theta, p_2, label="question 2")
+    plt.plot(theta, p_3, label="question 3")
+    plt.plot(theta, p_4, label="question 4")
+    plt.plot(theta, p_5, label="question 5")
+    plt.xlabel("Value of theta")
+    plt.ylabel("Probability of the correct response")
+    plt.legend()
+    plt.show()
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
