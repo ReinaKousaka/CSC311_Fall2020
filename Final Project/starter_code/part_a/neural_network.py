@@ -182,13 +182,13 @@ def main():
     # for k in (10, 50, 100, 200, 500):
     #     model = AutoEncoder(train_matrix.shape[1], k)
     #     print('K = {}'.format(k))
-    #     train(model, 0.1, None, train_matrix, zero_train_matrix,
+    #     train(model, 0.1, 0, train_matrix, zero_train_matrix,
     #       valid_data, num_epoch=10)
 
     # Question 3(d)
     k = 10  # choose k*
     model = AutoEncoder(train_matrix.shape[1], k)
-    train(model, 0.1, None, train_matrix, zero_train_matrix,
+    train(model, 0.1, 0, train_matrix, zero_train_matrix,
           valid_data, num_epoch=20, draw=True)
     test_acc = evaluate(model, zero_train_matrix, test_data)
     print('Test Accuracy = {}.'.format(test_acc))
